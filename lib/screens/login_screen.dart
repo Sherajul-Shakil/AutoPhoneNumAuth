@@ -1,6 +1,9 @@
+import 'package:alt_sms_autofill/alt_sms_autofill.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:phone_auth/screens/home_screen.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 
 class LoginScreen extends StatelessWidget {
   final _phoneController = TextEditingController();
@@ -12,7 +15,7 @@ class LoginScreen extends StatelessWidget {
     _auth.verifyPhoneNumber(
       phoneNumber: phone,
       timeout: const Duration(seconds: 60),
-      verificationCompleted: (AuthCredential credential) async {
+      verificationCompleted: (PhoneAuthCredential credential) async {
         Navigator.of(context).pop();
 
         UserCredential result = await _auth.signInWithCredential(credential);
@@ -56,14 +59,18 @@ class LoginScreen extends StatelessWidget {
                     textColor: Colors.white,
                     color: Colors.blue,
                     onPressed: () async {
-                      final code = _codeController.text.trim();
+                      String comingSms = (await AltSmsAutofill().listenForSms)!;
+                      String aStr =
+                          comingSms.replaceAll(new RegExp(r'[^0-9]'), '');
+                      String otp = aStr.substring(0, 6);
+                      //final code = _codeController.text.trim();
+                      final code = otp;
+                      print(comingSms);
                       AuthCredential credential = PhoneAuthProvider.credential(
                           verificationId: verificationId, smsCode: code);
 
                       UserCredential result =
                           await _auth.signInWithCredential(credential);
-
-                      //FirebaseUser user = result.user;
 
                       if (result.user != null) {
                         Navigator.push(
